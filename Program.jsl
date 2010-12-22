@@ -1,0 +1,13 @@
+package WindowsService;
+
+import System.ServiceProcess.*;
+
+public class Program
+{
+	public static void main(String[] args)
+	{
+		ServiceBase[] ServicesToRun;
+		ServicesToRun = new ServiceBase[] { new Service1(args) };							
+		ServiceBase.Run(ServicesToRun);
+	}
+}

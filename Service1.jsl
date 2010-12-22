@@ -1,0 +1,107 @@
+package WindowsService;
+
+import System.Collections.Generic.*;
+import System.ComponentModel.*;
+import System.Data.*;
+import System.Diagnostics.*;
+import System.ServiceProcess.*;
+import java.lang.Process;
+import java.lang.Runtime;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+
+public class Service1 extends System.ServiceProcess.ServiceBase
+{
+	private System.ComponentModel.IContainer components;
+	protected Runtime _oRun = Runtime.getRuntime();
+	protected Process _oProcess = null;
+	protected String theExe = "";
+	protected String theConfig = "";
+	protected String thePort = "";
+
+	public Service1(String[] args)
+	{		
+		if (args.length >= 3)
+		{
+			theExe = args[0];
+			theConfig = args[1];
+			thePort = args[2];
+		}								
+		InitializeComponent();
+	}
+
+
+	#region Windows Form Designer generated code
+	/**
+     * Clean up any resources being used.
+     */
+	protected void Dispose(boolean disposing)
+	{
+		if (disposing)
+		{
+			if (components != null)
+			{
+				components.Dispose();
+			}
+		}
+		super.Dispose(disposing);
+	}
+
+	/**
+	 * Required method for Designer support - do not modify 
+	 * the contents of this method with the code editor.
+	 */
+	private void InitializeComponent()
+	{
+		components = new System.ComponentModel.Container();
+		this.set_ServiceName("Service1");
+	}
+	#endregion
+
+	protected void OnStart(String[] args)
+	{
+		try 
+		{	
+			_oProcess = _oRun.exec(theExe+" "+theConfig+" "+thePort);
+		}
+		catch (Exception ex)
+		{
+			System.out.println(ex.getMessage());
+		}
+	}
+		
+	protected void OnStop()
+	{
+		try
+		{
+			URL xmlServer = new URL("http://localhost:" + thePort);
+			HttpURLConnection xmlConnection = (HttpURLConnection)xmlServer.openConnection();
+			
+			xmlConnection.setDoOutput(true);
+			xmlConnection.setRequestMethod("POST");
+			xmlConnection.setRequestProperty("cygnus_dotnet_client", "");
+
+			PrintWriter out = new PrintWriter(xmlConnection.getOutputStream());
+			out.println("<SERVICE request_type='shutdown' />");
+			out.close();
+			
+			InputStream x = xmlConnection.getInputStream();
+			BufferedReader in = new BufferedReader(new InputStreamReader(x));
+			in.readLine();
+			in.close();			
+
+			xmlConnection.disconnect();				
+			
+			Thread.sleep(15 * 1000);
+		}
+		catch (Exception ex)
+		{
+			System.out.println(ex.getMessage());
+		}	
+	}
+
+}
